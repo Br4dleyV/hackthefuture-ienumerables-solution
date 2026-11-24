@@ -1,0 +1,23 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
+    <!-- Tobin records a delivery that arrived. Opened by Main.controller.ts → onReceiveDelivery. -->
+    <Dialog
+        id="deliveryDialog"
+        core:require="{ formatMessage: 'sap/base/strings/formatMessage' }"
+        title="{ parts: ['i18n>receiveTitle', 'food>name'], formatter: 'formatMessage' }"
+        contentWidth="24rem">
+        <VBox id="deliveryForm" class="sapUiSmallMargin">
+            <Label id="deliveryQuantityLabel" text="{i18n>receiveQuantity}" labelFor="deliveryQuantity" required="true" />
+            <Input id="deliveryQuantity" type="Number" value="{view>/delivery/quantity}" description="{food>unit}" />
+            <Label id="deliverySupplierLabel" text="{i18n>receiveSupplier}" labelFor="deliverySupplier" required="true" class="sapUiSmallMarginTop" />
+            <Input id="deliverySupplier" value="{view>/delivery/supplier}" />
+            <Label id="deliveryAtLabel" text="{i18n>receiveAt}" labelFor="deliveryAt" required="true" class="sapUiSmallMarginTop" />
+            <DateTimePicker id="deliveryAt" dateValue="{view>/delivery/receivedAt}" />
+        </VBox>
+        <beginButton>
+            <Button id="deliverySave" type="Emphasized" text="{i18n>receiveSave}" press=".onSaveDelivery" />
+        </beginButton>
+        <endButton>
+            <Button id="deliveryCancel" text="{i18n>receiveCancel}" press=".onCancelDelivery" />
+        </endButton>
+    </Dialog>
+</core:FragmentDefinition>

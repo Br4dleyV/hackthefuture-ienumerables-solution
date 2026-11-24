@@ -176,6 +176,7 @@
                                 <Column id="stockStatusCol"><Text id="stockStatusHdr" text="{i18n>stockStatusHeading}" /></Column>
                                 <Column id="stockRunwayCol" minScreenWidth="Tablet" demandPopin="true"><Text id="stockRunwayHdr" text="{i18n>stockRunway}" /></Column>
                                 <Column id="stockOrderCol" minScreenWidth="Tablet" demandPopin="true"><Text id="stockOrderHdr" text="{i18n>stockOrder}" /></Column>
+                                <Column id="stockReceiveCol" hAlign="End" minScreenWidth="Tablet" demandPopin="true"><Text id="stockReceiveHdr" text="{i18n>stockReceiveHeading}" /></Column>
                             </columns>
                             <items>
                                 <ColumnListItem id="stockRow">
@@ -197,6 +198,7 @@
                                             <ObjectNumber id="stockOrderAmount" number="{food>orderQuantity}" unit="{food>unit}" />
                                             <Text id="stockSupplier" text="{food>supplierName}" />
                                         </VBox>
+                                        <Button id="stockReceiveButton" icon="sap-icon://ti/truck-delivery" text="{i18n>stockReceive}" press=".onReceiveDelivery" />
                                     </cells>
                                 </ColumnListItem>
                             </items>

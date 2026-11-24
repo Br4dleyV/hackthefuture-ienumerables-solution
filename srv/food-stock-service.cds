@@ -17,6 +17,9 @@ service FoodStockService @(path: 'food-stock', impl: 'srv/food-stock-service') {
     virtual null as orderLate      : Boolean,
     virtual null as supplierName   : String,
     virtual null as leadDays       : Integer
+  } actions {
+    /** Tobin records a delivery that arrived: adds a StockReceivals row and raises currentQuantity. */
+    action receiveDelivery(quantity : Decimal(9, 2), supplier : String, receivedAt : DateTime);
   };
 
   @readonly
