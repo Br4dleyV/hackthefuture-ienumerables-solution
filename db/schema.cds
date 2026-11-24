@@ -110,3 +110,14 @@ entity Notifications : cuid, managed {
   message      : String;
   acknowledged : Boolean default false;
 }
+
+// ---------------------------------------------------------------------------
+// Council — what the council saw on its printed Monday page
+// ---------------------------------------------------------------------------
+
+/** One row per part of the village each time the council prints its page (Rowan: "better or worse than last week?"). */
+entity CouncilSnapshots : cuid, managed {
+  takenAt : DateTime;
+  area    : String;
+  level   : String; // URGENT | UNKNOWN | WORRY | OK
+}

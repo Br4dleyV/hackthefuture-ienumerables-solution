@@ -1,5 +1,8 @@
 import Controller from "sap/ui/core/mvc/Controller";
 import JSONModel from "sap/ui/model/json/JSONModel";
+import MessageBox from "sap/m/MessageBox";
+import MessageToast from "sap/m/MessageToast";
+import type ODataModel from "sap/ui/model/odata/v4/ODataModel";
 import type ResourceModel from "sap/ui/model/resource/ResourceModel";
 import type ResourceBundle from "sap/base/i18n/ResourceBundle";
 import type { ValueState } from "sap/ui/core/library";
@@ -39,10 +42,37 @@ export default class Main extends Controller {
     (this.getView()?.getModel("view") as JSONModel).setProperty("/loadedAt", new Date());
   }
 
-  /** Rowan: "on paper, if you please" — the browser's print dialog; style.css makes it paper-friendly. */
-  public onPrint(): void {
+  /**
+   * Rowan: "on paper, if you please" — the browser's print dialog (style.css makes it paper-friendly).
+   * Afterwards the server remembers what the council saw, so next time the page says "better or worse".
+   */
+  public async onPrint(): Promise<void> {
     // tsconfig has no DOM types (lib: ES2022), so describe the one browser function we need.
     (globalThis as unknown as { print(): void }).print();
+    const model = this.getOwnerComponent()?.getModel() as ODataModel;
+    try {
+      await model.bindContext("/recordPrintedPage(...)").invoke();
+      MessageToast.show(this.text("printSaved"));
+      model.refresh();
+    } catch (error) {
+      MessageBox.error(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  public tierText(tier: Value): string {
+    return this.text(`tier_${String(tier)}`);
+  }
+
+  public trendText(trend: Value): string {
+    return this.text(`trend${String(trend)}`);
+  }
+
+  public trendState(trend: Value): `${ValueState}` {
+    return trend === "BETTER" ? "Success" : trend === "WORSE" ? "Error" : "None";
+  }
+
+  public trendIcon(trend: Value): string {
+    return trend === "BETTER" ? "sap-icon://ti/trending-up" : trend === "WORSE" ? "sap-icon://ti/trending-down" : trend === "SAME" ? "sap-icon://ti/equal" : "sap-icon://ti/point";
   }
 
   private text(key: string, args?: Value[]): string {
@@ -63,22 +93,29 @@ export default class Main extends Controller {
     return ICON[String(level)] ?? ICON.UNKNOWN;
   }
 
-  public areaName(area: Value): string {
-    return area === "PANTRY" ? this.text("pantryArea") : String(area ?? "");
+  public areaWater(code: Value): string {
+    return this.text(`water_${String(code)}`);
   }
 
-  public areaWhy(reasonCode: Value, subjects: Value): string {
-    return this.text(`areaWhy_${String(reasonCode)}`, [subjects]);
+  public areaFood(code: Value, items: Value): string {
+    return this.text(`food_${String(code)}`, [items]);
   }
 
-  /** One sentence per spending line: what to do, and why it sits at this place. */
-  public actionWhy(kind: Value, level: Value, target: Value, areas: Value, families: Value, days: Value, leadDays: Value): string {
+  public costText(cost: Value): string {
+    return Number(cost) > 0 ? this.text("crowns", [cost]) : this.text("noCrowns");
+  }
+
+  /** One plain sentence per spending line — routes by place name, never pipe codes (Rowan: no jargon). */
+  public actionWhy(
+    kind: Value, level: Value, target: Value, from: Value, to: Value,
+    areas: Value, families: Value, days: Value, leadDays: Value,
+  ): string {
     switch (kind) {
       case "REPAIR":
-        if (!areas) return this.text("actionRepairNobody", [target]);
-        if (level === "WORRY") return this.text("actionRepairWeak", [target, areas]);
-        return families ? this.text("actionRepairFamilies", [target, families, areas]) : this.text("actionRepair", [target, areas]);
-      case "CHECK_PIPE": return this.text("actionCheckPipe", [target, areas]);
+        if (!areas) return this.text("actionRepairNobody", [from, to]);
+        if (level === "WORRY") return this.text("actionRepairWeak", [from, to, areas]);
+        return families ? this.text("actionRepairFamilies", [from, to, families, areas]) : this.text("actionRepair", [from, to, areas]);
+      case "CHECK_PIPE": return this.text("actionCheckPipe", [from, to]);
       case "CHECK_FOOD": return this.text("actionCheckFood", [target]);
       case "EMERGENCY_DELIVERY": return this.text("actionEmergencyDelivery", [target, days, leadDays]);
       case "ORDER": return this.text("actionOrder", [target]);

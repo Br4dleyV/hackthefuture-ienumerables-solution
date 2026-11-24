@@ -14,6 +14,15 @@
     font-size: 1.0625rem;
 }
 
+.cmCost {
+    font-weight: bold;
+}
+
+.cmWhyHere {
+    font-style: italic;
+    color: var(--sapContent_LabelColor);
+}
+
 @media print {
     .cmNoPrint {
         display: none;

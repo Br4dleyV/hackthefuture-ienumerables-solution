@@ -6,7 +6,8 @@
     xmlns:core="sap.ui.core"
     core:require="{
         formatMessage: 'sap/base/strings/formatMessage',
-        DateTime: 'sap/ui/model/type/DateTime'
+        DateTime: 'sap/ui/model/type/DateTime',
+        DateTimeOffset: 'sap/ui/model/odata/type/DateTimeOffset'
     }"
     displayBlock="true"
     height="100%">
@@ -30,6 +31,20 @@
 
         <f:content>
             <VBox id="content">
+                <!-- ============ 0. Rowan: "the big picture first" — one line about the 500 crowns ============ -->
+                <List id="budgetList" showNoData="false" class="sapUiSmallMarginBottom"
+                    items="{ path: '/Budget', templateShareable: false }">
+                    <CustomListItem id="budgetItem">
+                        <VBox id="budgetBox" class="cmItem">
+                            <Title id="budgetLine" level="H2" wrapping="true"
+                                text="{ parts: ['i18n>budgetLine', 'spend', 'total', 'left'], formatter: 'formatMessage' }" />
+                            <Text id="comparedWith" visible="{= !!${comparedWith} }"
+                                text="{ parts: ['i18n>comparedWith', { path: 'comparedWith', type: 'DateTimeOffset', formatOptions: { style: 'long' } }], formatter: 'formatMessage' }" />
+                            <Text id="firstPage" visible="{= !${comparedWith} }" text="{i18n>firstPage}" />
+                        </VBox>
+                    </CustomListItem>
+                </List>
+
                 <!-- ============ 1. Rowan: "where the crowns should go, and why" ============ -->
                 <Title id="actionsTitle" text="{i18n>actionsTitle}" level="H2" class="sapUiSmallMarginBottom" />
                 <List id="actionsList" noDataText="{i18n>noData}" updateFinished=".onLoaded"
@@ -38,12 +53,19 @@
                         <HBox id="actionBox" alignItems="Start" class="cmItem">
                             <Title id="actionRank" text="{rank}" level="H3" class="cmRank" />
                             <VBox id="actionText">
-                                <ObjectStatus id="actionLevel"
-                                    text="{ path: 'level', formatter: '.levelText' }"
-                                    icon="{ path: 'level', formatter: '.levelIcon' }"
-                                    state="{ path: 'level', formatter: '.levelState' }" />
+                                <HBox id="actionHead" alignItems="Center" wrap="Wrap">
+                                    <ObjectStatus id="actionLevel" class="sapUiSmallMarginEnd"
+                                        text="{ path: 'level', formatter: '.levelText' }"
+                                        icon="{ path: 'level', formatter: '.levelIcon' }"
+                                        state="{ path: 'level', formatter: '.levelState' }" />
+                                    <Text id="actionCost" class="cmCost" text="{ path: 'cost', formatter: '.costText' }" />
+                                </HBox>
                                 <Text id="actionWhy" class="cmWhy"
-                                    text="{ parts: ['kind', 'level', 'target', 'areas', 'families', { path: 'days', targetType: 'any' }, 'leadDays'], formatter: '.actionWhy' }" />
+                                    text="{ parts: ['kind', 'level', 'target', 'fromPlace', 'toPlace', 'areas', 'families', { path: 'days', targetType: 'any' }, 'leadDays'], formatter: '.actionWhy' }" />
+                                <Text id="actionWhyHere" class="cmWhyHere" text="{ path: 'tier', formatter: '.tierText' }" />
+                                <ObjectStatus id="actionCanWait" visible="{= ${advice} === 'CAN_WAIT' }" state="Information" icon="sap-icon://ti/clock-pause"
+                                    text="{ parts: ['i18n>canWait', 'cost'], formatter: 'formatMessage' }" />
+                                <ObjectStatus id="actionNotThisWeek" visible="{= ${advice} === 'NO_BUDGET' }" text="{i18n>notThisWeek}" state="Warning" icon="sap-icon://ti/clock-pause" />
                             </VBox>
                         </HBox>
                     </CustomListItem>
@@ -56,13 +78,18 @@
                     <CustomListItem id="areaItem">
                         <VBox id="areaBox" class="cmItem">
                             <HBox id="areaHead" alignItems="Center" wrap="Wrap">
-                                <Title id="areaName" text="{ path: 'area', formatter: '.areaName' }" level="H3" class="sapUiSmallMarginEnd" />
+                                <Title id="areaName" text="{area}" level="H3" class="sapUiSmallMarginEnd" />
                                 <ObjectStatus id="areaLevel"
                                     text="{ path: 'level', formatter: '.levelText' }"
                                     icon="{ path: 'level', formatter: '.levelIcon' }"
-                                    state="{ path: 'level', formatter: '.levelState' }" />
+                                    state="{ path: 'level', formatter: '.levelState' }" class="sapUiSmallMarginEnd" />
+                                <ObjectStatus id="areaTrend"
+                                    text="{ path: 'trend', formatter: '.trendText' }"
+                                    icon="{ path: 'trend', formatter: '.trendIcon' }"
+                                    state="{ path: 'trend', formatter: '.trendState' }" />
                             </HBox>
-                            <Text id="areaWhy" text="{ parts: ['reasonCode', 'subjects'], formatter: '.areaWhy' }" />
+                            <Text id="areaWater" text="{ path: 'waterCode', formatter: '.areaWater' }" />
+                            <Text id="areaFood" text="{ parts: ['foodCode', 'foodItems'], formatter: '.areaFood' }" />
                         </VBox>
                     </CustomListItem>
                 </List>
