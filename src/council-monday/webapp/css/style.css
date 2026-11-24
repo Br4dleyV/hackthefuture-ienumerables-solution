@@ -10,16 +10,27 @@
     color: var(--sapContent_LabelColor);
 }
 
-.cmWhy {
-    font-size: 1.0625rem;
+.cmGrow {
+    flex: 1;
 }
 
 .cmCost {
-    font-weight: bold;
+    margin-left: 1rem;
+    white-space: nowrap;
 }
 
-.cmWhyHere {
-    font-style: italic;
+.cmBudgetBar {
+    max-width: 32rem;
+}
+
+.cmLegend {
+    padding: 0.5rem;
+    border: 1px solid var(--sapGroup_ContentBorderColor);
+    border-radius: 0.5rem;
+    row-gap: 0.25rem;
+}
+
+.cmSmall {
     color: var(--sapContent_LabelColor);
 }
 
@@ -29,7 +40,7 @@
     }
 
     /* Paper: browsers drop the dark backgrounds but keep the dark theme's light-grey text, which is
-       unreadable on white. Print all text black; each status stays readable through icon + text. */
+       unreadable on white. Print all text black; each status stays readable through icon + words. */
     .cmPrintable,
     .cmPrintable * {
         color: #000 !important;

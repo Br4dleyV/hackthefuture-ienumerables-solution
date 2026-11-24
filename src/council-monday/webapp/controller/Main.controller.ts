@@ -16,10 +16,13 @@ const ICON: Record<string, string> = {
   WORRY: "sap-icon://ti/alert-triangle",
   OK: "sap-icon://ti/circle-check",
 };
+const WATER_STATE: Record<string, `${ValueState}`> = {
+  WATER_BROKEN: "Error", WATER_UNSURE: "None", WATER_WEAK: "Warning", WATER_OK: "Success", OWN_WELL: "Success", WATER_UNKNOWN: "None",
+};
 
 /**
- * Rowan's Monday page. Both lists are bound to CouncilService in Main.view.xml (order and levels
- * come from the backend); this controller turns codes into sentences and prints the page.
+ * Rowan's Monday page. All lists are bound to CouncilService in Main.view.xml (order, levels and costs
+ * come from the backend); this controller turns codes into short words and prints the page.
  *
  * @namespace oakhaven.council.controller
  */
@@ -59,22 +62,6 @@ export default class Main extends Controller {
     }
   }
 
-  public tierText(tier: Value): string {
-    return this.text(`tier_${String(tier)}`);
-  }
-
-  public trendText(trend: Value): string {
-    return this.text(`trend${String(trend)}`);
-  }
-
-  public trendState(trend: Value): `${ValueState}` {
-    return trend === "BETTER" ? "Success" : trend === "WORSE" ? "Error" : "None";
-  }
-
-  public trendIcon(trend: Value): string {
-    return trend === "BETTER" ? "sap-icon://ti/trending-up" : trend === "WORSE" ? "sap-icon://ti/trending-down" : trend === "SAME" ? "sap-icon://ti/equal" : "sap-icon://ti/point";
-  }
-
   private text(key: string, args?: Value[]): string {
     // Decimals may arrive as "3.33": Number() keeps them short ("3.33", "4").
     const show = (a: Value): string => (a === null || a === undefined || a === "" ? "?" : Number.isNaN(Number(a)) ? String(a) : String(Number(a)));
@@ -93,33 +80,69 @@ export default class Main extends Controller {
     return ICON[String(level)] ?? ICON.UNKNOWN;
   }
 
-  public areaWater(code: Value): string {
+  /** "3 All right" — the count of village parts per level, for the summary at the top. */
+  public levelCount(level: string, count: Value): string {
+    return `${String(count ?? 0)} ${this.levelText(level)}`;
+  }
+
+  public trendText(trend: Value): string {
+    return this.text(`trend${String(trend)}`);
+  }
+
+  public waterText(code: Value): string {
     return this.text(`water_${String(code)}`);
   }
 
-  public areaFood(code: Value, items: Value): string {
+  public waterState(code: Value): `${ValueState}` {
+    return WATER_STATE[String(code)] ?? "None";
+  }
+
+  public foodText(code: Value, items: Value): string {
     return this.text(`food_${String(code)}`, [items]);
   }
 
-  public costText(cost: Value): string {
-    return Number(cost) > 0 ? this.text("crowns", [cost]) : this.text("noCrowns");
+  public foodState(code: Value): `${ValueState}` {
+    const value = String(code);
+    return value.startsWith("FOOD_SHORT") ? "Error" : value.startsWith("FOOD_UNSURE") ? "None" : "Success";
   }
 
-  /** One plain sentence per spending line — routes by place name, never pipe codes (Rowan: no jargon). */
-  public actionWhy(
-    kind: Value, level: Value, target: Value, from: Value, to: Value,
-    areas: Value, families: Value, days: Value, leadDays: Value,
-  ): string {
+  public costsCrowns(cost: Value): boolean {
+    return Number(cost) > 0;
+  }
+
+  public costText(cost: Value): string {
+    return this.text("crowns", [cost]);
+  }
+
+  /** A note only for CAN_WAIT (backup pipe: crowns stay in reserve) and NO_BUDGET (500 crowns used up). */
+  public hasNote(advice: Value): boolean {
+    return advice === "CAN_WAIT" || advice === "NO_BUDGET";
+  }
+
+  public noteText(advice: Value): string {
+    return advice === "CAN_WAIT" ? this.text("canWait") : advice === "NO_BUDGET" ? this.text("notThisWeek") : "";
+  }
+
+  public noteState(advice: Value): `${ValueState}` {
+    return advice === "NO_BUDGET" ? "Warning" : "Information";
+  }
+
+  /** Short title per line — places by name, never pipe codes (Rowan: no jargon). */
+  public actionTitle(kind: Value, target: Value, from: Value, to: Value, areas: Value): string {
     switch (kind) {
-      case "REPAIR":
-        if (!areas) return this.text("actionRepairNobody", [from, to]);
-        if (level === "WORRY") return this.text("actionRepairWeak", [from, to, areas]);
-        return families ? this.text("actionRepairFamilies", [from, to, families, areas]) : this.text("actionRepair", [from, to, areas]);
-      case "CHECK_PIPE": return this.text("actionCheckPipe", [from, to]);
-      case "CHECK_FOOD": return this.text("actionCheckFood", [target]);
-      case "EMERGENCY_DELIVERY": return this.text("actionEmergencyDelivery", [target, days, leadDays]);
-      case "ORDER": return this.text("actionOrder", [target]);
+      case "REPAIR": return areas ? this.text("titleRepair", [to]) : this.text("titleRepairBackup", [from]);
+      case "CHECK_PIPE": return this.text("titleCheckPipe", [to]);
+      case "CHECK_FOOD": return this.text("titleCheckFood", [target]);
+      case "EMERGENCY_DELIVERY": return this.text("titleEmergencyDelivery", [target]);
+      case "ORDER": return this.text("titleOrder", [target]);
       default: return "";
     }
+  }
+
+  /** Short why = why it sits at this place (Rowan: "tell us why something comes first"). */
+  public actionWhy(tier: Value, kind: Value, families: Value, areas: Value, days: Value, leadDays: Value): string {
+    if (Number(tier) === 1) return families ? this.text("why_1_families", [families]) : this.text("why_1", [areas]);
+    if (Number(tier) === 2) return this.text("why_2", [days, leadDays]);
+    return this.text(`why_${String(tier)}`);
   }
 }

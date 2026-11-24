@@ -3,6 +3,7 @@
     xmlns="sap.m"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns:f="sap.f"
+    xmlns:card="sap.f.cards"
     xmlns:core="sap.ui.core"
     core:require="{
         formatMessage: 'sap/base/strings/formatMessage',
@@ -18,10 +19,7 @@
                     <Title id="pageTitleText" text="{i18n>appTitle}" level="H1" wrapping="true" />
                 </f:heading>
                 <f:expandedContent>
-                    <VBox id="pageSubtitleBox">
-                        <Label id="pageSubtitle" text="{i18n>pageSubtitle}" wrapping="true" />
-                        <Label id="printedOn" text="{ parts: ['i18n>printedOn', { path: 'view>/loadedAt', type: 'DateTime', formatOptions: { style: 'full' } }], formatter: 'formatMessage' }" />
-                    </VBox>
+                    <Label id="printedOn" text="{ parts: ['i18n>printedOn', { path: 'view>/loadedAt', type: 'DateTime', formatOptions: { style: 'full' } }], formatter: 'formatMessage' }" />
                 </f:expandedContent>
                 <f:actions>
                     <Button id="printButton" type="Emphasized" icon="sap-icon://ti/printer" text="{i18n>printButton}" press=".onPrint" class="cmNoPrint" />
@@ -31,68 +29,100 @@
 
         <f:content>
             <VBox id="content">
-                <!-- ============ 0. Rowan: "the big picture first" — one line about the 500 crowns ============ -->
-                <List id="budgetList" showNoData="false" class="sapUiSmallMarginBottom"
-                    items="{ path: '/Budget', templateShareable: false }">
+                <!-- ============ 0. The big picture first: this week's crowns ============ -->
+                <List id="budgetList" showNoData="false" items="{ path: '/Budget', templateShareable: false }">
                     <CustomListItem id="budgetItem">
                         <VBox id="budgetBox" class="cmItem">
-                            <Title id="budgetLine" level="H2" wrapping="true"
-                                text="{ parts: ['i18n>budgetLine', 'spend', 'total', 'left'], formatter: 'formatMessage' }" />
-                            <Text id="comparedWith" visible="{= !!${comparedWith} }"
-                                text="{ parts: ['i18n>comparedWith', { path: 'comparedWith', type: 'DateTimeOffset', formatOptions: { style: 'long' } }], formatter: 'formatMessage' }" />
-                            <Text id="firstPage" visible="{= !${comparedWith} }" text="{i18n>firstPage}" />
+                            <HBox id="levelCounts" wrap="Wrap" alignItems="Center" class="sapUiSmallMarginBottom">
+                                <ObjectStatus id="countUrgent" class="sapMObjectStatusLarge sapUiMediumMarginEnd" state="Error" icon="sap-icon://ti/alert-octagon"
+                                    text="{ parts: [{ value: 'URGENT' }, 'areasUrgent'], formatter: '.levelCount' }" />
+                                <ObjectStatus id="countUnsure" class="sapMObjectStatusLarge sapUiMediumMarginEnd" state="None" icon="sap-icon://ti/help-circle"
+                                    text="{ parts: [{ value: 'UNKNOWN' }, 'areasUnsure'], formatter: '.levelCount' }" />
+                                <ObjectStatus id="countWorry" class="sapMObjectStatusLarge sapUiMediumMarginEnd" state="Warning" icon="sap-icon://ti/alert-triangle"
+                                    text="{ parts: [{ value: 'WORRY' }, 'areasWorry'], formatter: '.levelCount' }" />
+                                <ObjectStatus id="countOk" class="sapMObjectStatusLarge" state="Success" icon="sap-icon://ti/circle-check"
+                                    text="{ parts: [{ value: 'OK' }, 'areasOk'], formatter: '.levelCount' }" />
+                            </HBox>
+                            <Title id="budgetTitle" text="{i18n>budgetTitle}" level="H2" />
+                            <ProgressIndicator id="budgetBar" class="cmBudgetBar" state="Information" showValue="true"
+                                percentValue="{= %{total} ? %{spend} * 100 / %{total} : 0 }"
+                                displayValue="{ parts: ['i18n>budgetBar', 'spend', 'total'], formatter: 'formatMessage' }" />
+                            <ObjectStatus id="budgetReserve" icon="sap-icon://ti/coins" state="Success"
+                                text="{ parts: ['i18n>budgetReserve', 'left'], formatter: 'formatMessage' }" />
+                            <Text id="comparedWith" class="cmSmall" visible="{= !!%{comparedWith} }"
+                                text="{ parts: ['i18n>comparedWith', { path: 'comparedWith', type: 'DateTimeOffset', formatOptions: { style: 'medium' } }], formatter: 'formatMessage' }" />
                         </VBox>
                     </CustomListItem>
                 </List>
 
-                <!-- ============ 1. Rowan: "where the crowns should go, and why" ============ -->
-                <Title id="actionsTitle" text="{i18n>actionsTitle}" level="H2" class="sapUiSmallMarginBottom" />
+                <!-- ============ What the signs mean — every icon explained in words (Bram is colour-blind) ============ -->
+                <HBox id="legend" wrap="Wrap" alignItems="Center" class="cmLegend sapUiSmallMarginTop">
+                    <Label id="legendTitle" text="{i18n>legendTitle}" design="Bold" class="sapUiSmallMarginEnd" />
+                    <ObjectStatus id="legendUrgent" icon="sap-icon://ti/alert-octagon" state="Error" text="{i18n>legendUrgent}" class="sapUiSmallMarginEnd" />
+                    <ObjectStatus id="legendUnsure" icon="sap-icon://ti/help-circle" state="None" text="{i18n>legendUnsure}" class="sapUiSmallMarginEnd" />
+                    <ObjectStatus id="legendWorry" icon="sap-icon://ti/alert-triangle" state="Warning" text="{i18n>legendWorry}" class="sapUiSmallMarginEnd" />
+                    <ObjectStatus id="legendOk" icon="sap-icon://ti/circle-check" state="Success" text="{i18n>legendOk}" class="sapUiSmallMarginEnd" />
+                    <ObjectStatus id="legendCrowns" icon="sap-icon://ti/coins" text="{i18n>legendCrowns}" class="sapUiSmallMarginEnd" />
+                    <ObjectStatus id="legendWait" icon="sap-icon://ti/clock-pause" state="Information" text="{i18n>legendWait}" class="sapUiSmallMarginEnd" />
+                    <ObjectStatus id="legendWater" icon="sap-icon://ti/droplet" text="{i18n>legendWater}" class="sapUiSmallMarginEnd" />
+                    <ObjectStatus id="legendFood" icon="sap-icon://ti/bread" text="{i18n>legendFood}" />
+                </HBox>
+
+                <!-- ============ 1. Where the crowns go, in order, each with a short why ============ -->
+                <Title id="actionsTitle" text="{i18n>actionsTitle}" level="H2" class="sapUiMediumMarginTop sapUiSmallMarginBottom" />
                 <List id="actionsList" noDataText="{i18n>noData}" updateFinished=".onLoaded"
                     items="{ path: '/Actions', sorter: { path: 'rank' }, templateShareable: false }">
                     <CustomListItem id="actionItem">
-                        <HBox id="actionBox" alignItems="Start" class="cmItem">
+                        <HBox id="actionBox" alignItems="Center" class="cmItem">
                             <Title id="actionRank" text="{rank}" level="H3" class="cmRank" />
-                            <VBox id="actionText">
-                                <HBox id="actionHead" alignItems="Center" wrap="Wrap">
+                            <VBox id="actionText" class="cmGrow">
+                                <Title id="actionTitle" level="H3" wrapping="true"
+                                    text="{ parts: ['kind', 'target', 'fromPlace', 'toPlace', 'areas'], formatter: '.actionTitle' }" />
+                                <HBox id="actionMeta" alignItems="Center" wrap="Wrap">
                                     <ObjectStatus id="actionLevel" class="sapUiSmallMarginEnd"
                                         text="{ path: 'level', formatter: '.levelText' }"
                                         icon="{ path: 'level', formatter: '.levelIcon' }"
                                         state="{ path: 'level', formatter: '.levelState' }" />
-                                    <Text id="actionCost" class="cmCost" text="{ path: 'cost', formatter: '.costText' }" />
+                                    <Text id="actionWhy"
+                                        text="{ parts: ['tier', 'kind', 'families', 'areas', { path: 'days', targetType: 'any' }, 'leadDays'], formatter: '.actionWhy' }" />
                                 </HBox>
-                                <Text id="actionWhy" class="cmWhy"
-                                    text="{ parts: ['kind', 'level', 'target', 'fromPlace', 'toPlace', 'areas', 'families', { path: 'days', targetType: 'any' }, 'leadDays'], formatter: '.actionWhy' }" />
-                                <Text id="actionWhyHere" class="cmWhyHere" text="{ path: 'tier', formatter: '.tierText' }" />
-                                <ObjectStatus id="actionCanWait" visible="{= ${advice} === 'CAN_WAIT' }" state="Information" icon="sap-icon://ti/clock-pause"
-                                    text="{ parts: ['i18n>canWait', 'cost'], formatter: 'formatMessage' }" />
-                                <ObjectStatus id="actionNotThisWeek" visible="{= ${advice} === 'NO_BUDGET' }" text="{i18n>notThisWeek}" state="Warning" icon="sap-icon://ti/clock-pause" />
+                                <!-- Only for "can wait" (backup pipe) and "no crowns left"; hidden otherwise. -->
+                                <ObjectStatus id="actionNote" icon="sap-icon://ti/clock-pause"
+                                    visible="{ path: 'advice', targetType: 'any', formatter: '.hasNote' }"
+                                    text="{ path: 'advice', formatter: '.noteText' }"
+                                    state="{ path: 'advice', formatter: '.noteState' }" />
                             </VBox>
+                            <!-- Only when crowns are spent: a check or Tobin's normal order costs the council nothing. -->
+                            <ObjectStatus id="actionCost" class="sapMObjectStatusLarge cmCost" icon="sap-icon://ti/coins"
+                                visible="{ path: 'cost', targetType: 'any', formatter: '.costsCrowns' }"
+                                text="{ path: 'cost', formatter: '.costText' }" />
                         </HBox>
                     </CustomListItem>
                 </List>
 
-                <!-- ============ 2. Rowan: "for each part of the village, is it all right?" ============ -->
+                <!-- ============ 2. Every part of the village at a glance ============ -->
                 <Title id="areasTitle" text="{i18n>areasTitle}" level="H2" class="sapUiMediumMarginTop sapUiSmallMarginBottom" />
-                <List id="areasList" noDataText="{i18n>noData}"
-                    items="{ path: '/Areas', sorter: { path: 'rank' }, templateShareable: false }">
-                    <CustomListItem id="areaItem">
-                        <VBox id="areaBox" class="cmItem">
-                            <HBox id="areaHead" alignItems="Center" wrap="Wrap">
-                                <Title id="areaName" text="{area}" level="H3" class="sapUiSmallMarginEnd" />
-                                <ObjectStatus id="areaLevel"
+                <FlexBox id="areaCards" wrap="Wrap" items="{ path: '/Areas', sorter: { path: 'rank' }, templateShareable: false }">
+                    <f:Card id="areaCard" width="16rem" class="sapUiTinyMarginEnd sapUiTinyMarginBottom">
+                        <f:header>
+                            <card:Header id="areaCardHeader" title="{area}" statusText="{ path: 'trend', formatter: '.trendText' }" />
+                        </f:header>
+                        <f:content>
+                            <VBox id="areaCardContent" class="sapUiSmallMarginBegin sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <ObjectStatus id="areaLevel" class="sapMObjectStatusLarge sapUiTinyMarginBottom"
                                     text="{ path: 'level', formatter: '.levelText' }"
                                     icon="{ path: 'level', formatter: '.levelIcon' }"
-                                    state="{ path: 'level', formatter: '.levelState' }" class="sapUiSmallMarginEnd" />
-                                <ObjectStatus id="areaTrend"
-                                    text="{ path: 'trend', formatter: '.trendText' }"
-                                    icon="{ path: 'trend', formatter: '.trendIcon' }"
-                                    state="{ path: 'trend', formatter: '.trendState' }" />
-                            </HBox>
-                            <Text id="areaWater" text="{ path: 'waterCode', formatter: '.areaWater' }" />
-                            <Text id="areaFood" text="{ parts: ['foodCode', 'foodItems'], formatter: '.areaFood' }" />
-                        </VBox>
-                    </CustomListItem>
-                </List>
+                                    state="{ path: 'level', formatter: '.levelState' }" />
+                                <ObjectStatus id="areaWater" icon="sap-icon://ti/droplet"
+                                    text="{ path: 'waterCode', formatter: '.waterText' }"
+                                    state="{ path: 'waterCode', formatter: '.waterState' }" />
+                                <ObjectStatus id="areaFood" icon="sap-icon://ti/bread"
+                                    text="{ parts: ['foodCode', 'foodItems'], formatter: '.foodText' }"
+                                    state="{ path: 'foodCode', formatter: '.foodState' }" />
+                            </VBox>
+                        </f:content>
+                    </f:Card>
+                </FlexBox>
             </VBox>
         </f:content>
     </f:DynamicPage>
