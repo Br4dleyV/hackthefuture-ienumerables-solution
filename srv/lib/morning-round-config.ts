@@ -30,9 +30,9 @@ export const FAMILIES_BY_LANDMARK: Readonly<Record<string, number>> = { 'North R
 // Ilse said: when sensor and pipe clash, trust neither until Maren has checked → CHECK sits with UNKNOWN.
 export const STATUS_ORDER = ['EMERGENCY', 'UNKNOWN', 'CHECK', 'WORRY', 'OK'] as const;
 
-// Maren said: one crew, two repairs a day at most (one morning, one afternoon).
-// OPEN QUESTION — confirm with Maren: show only that many, or the whole list? For now: 0 = the whole list.
-export const CREW_CAPACITY = 0;
+// Maren said: one crew, two repairs a day at most — one in the morning, one in the afternoon.
+// Our choice (Maren: "that's for you to work out"): keep the whole list, mark the first two visits "today".
+export const REPAIRS_PER_DAY = 2;
 
 // Ilse said: a sensor showing more than double what its pipe can carry cannot be true.
 export const IMPOSSIBLE_FLOW_FACTOR = 2;

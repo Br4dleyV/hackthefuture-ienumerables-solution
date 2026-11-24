@@ -60,6 +60,8 @@ assert.deepEqual(
   // Backup loop last of the visits even in alarm (Maren); clashing numbers before "visit this week" (Ilse + Maren).
   ['NORTH-BRANCH-02:EMERGENCY', 'BAKERY-BRANCH:CHECK', 'SOUTH-BRANCH:WORRY', 'SECONDARY-LOOP:EMERGENCY', 'PRIMARY-MAIN:OK', 'NORTH-BRANCH-01:OK'],
 );
+// Maren: two repairs a day → the first two visits are today's; a pipe that is fine never is.
+assert.deepEqual(round.filter((i) => i.today).map((i) => i.pipeID), ['NORTH-BRANCH-02', 'BAKERY-BRANCH']);
 assert.equal(round[0].families, 140);
 assert.equal(round[0].flowPercent, 31);
 assert.equal(round.find((i) => i.pipeID === 'PRIMARY-MAIN')?.affectedLandmarks, 'North Residential Area, The Bakery, South Meadow Farms');

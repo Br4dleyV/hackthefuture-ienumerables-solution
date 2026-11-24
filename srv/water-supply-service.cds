@@ -52,6 +52,7 @@ service WaterSupplyService @(path: 'water-supply', impl: 'srv/water-supply-servi
   entity MorningRound {
     key pipeID           : String;
         rank             : Integer;
+        today            : Boolean; // one of the crew's REPAIRS_PER_DAY visits for today
         status           : String;  // EMERGENCY | WORRY | CHECK | UNKNOWN | OK
         reasonCode       : String;  // READINGS | NO_SENSOR | MISSING | STALE | NEGATIVE | OVER_NOMINAL | SENSOR_VS_PIPE
         location         : String;

@@ -23,14 +23,6 @@ const ICON: Record<string, string> = {
   UNKNOWN: "sap-icon://ti/help-circle",
   OK: "sap-icon://ti/circle-check",
 };
-const SECTION: Record<string, string> = {
-  EMERGENCY: "sectionUrgent",
-  WORRY: "sectionUrgent",
-  // Maren: "someone has to go and look"; Ilse: clashing numbers can't be trusted until Maren checks.
-  CHECK: "sectionUrgent",
-  UNKNOWN: "sectionUrgent",
-  OK: "sectionOk",
-};
 
 /**
  * The morning round. The lists are bound to /MorningRound in Main.view.xml (the order and status
@@ -74,9 +66,9 @@ export default class Main extends Controller {
     return this.bundle?.getText(key, args?.map(show)) ?? "";
   }
 
-  /** Group function of the morning list: one header per section. */
+  /** Group function of the morning list: today's two visits, the later visits, the pipes that are fine. */
   public getSection(context: Context): { key: string; text: string } {
-    const key = SECTION[String(context.getProperty("status"))] ?? "sectionUnknown";
+    const key = context.getProperty("status") === "OK" ? "sectionOk" : context.getProperty("today") ? "sectionToday" : "sectionLater";
     return { key, text: this.text(key) };
   }
 

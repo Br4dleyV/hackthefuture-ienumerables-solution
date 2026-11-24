@@ -3,7 +3,6 @@
  * no clock (`now` is a parameter) — so it can be checked with `morning-round.check.ts`.
  */
 import {
-  CREW_CAPACITY,
   EMERGENCY_FLOW_PERCENT,
   EMERGENCY_PRESSURE_PSI,
   FAMILIES_BY_LANDMARK,
@@ -11,6 +10,7 @@ import {
   MISMATCH_TOLERANCE,
   NOBODY_DOWNSTREAM,
   PEOPLE_FIRST,
+  REPAIRS_PER_DAY,
   ROOT_LANDMARK,
   STALE_AFTER_MS,
   STATUS_ORDER,
@@ -55,6 +55,8 @@ export interface LandmarkInput {
 export interface MorningRoundItem {
   pipeID: string;
   rank: number;
+  /** One of the first REPAIRS_PER_DAY visits: what the crew does today. */
+  today: boolean;
   status: Status;
   reasonCode: ReasonCode;
   location: string | null;
@@ -186,6 +188,7 @@ export function morningRound(
     const item: MorningRoundItem = {
       pipeID: pipe.pipeID,
       rank: 0,
+      today: false,
       status,
       reasonCode,
       location: pipe.location ?? null,
@@ -229,6 +232,6 @@ export function morningRound(
       a.depth - b.depth ||
       a.item.pipeID.localeCompare(b.item.pipeID),
   );
-  const items = rows.map((row, i) => ({ ...row.item, rank: i + 1 }));
-  return CREW_CAPACITY > 0 ? items.slice(0, CREW_CAPACITY) : items;
+  // Visits (not OK) are sorted first, so the first REPAIRS_PER_DAY rows that need a visit are today's.
+  return rows.map((row, i) => ({ ...row.item, rank: i + 1, today: row.item.status !== 'OK' && i < REPAIRS_PER_DAY }));
 }

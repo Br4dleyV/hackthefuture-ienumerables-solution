@@ -48,7 +48,7 @@
                                             text="{ path: 'status', formatter: '.statusText' }"
                                             icon="{ path: 'status', formatter: '.statusIcon' }"
                                             state="{ path: 'status', formatter: '.statusState' }"
-                                            inverted="true"
+                                            inverted="{today}"
                                             class="sapMObjectStatusLarge sapUiTinyMarginBottom" />
                                         <Title id="roundPipe" text="{pipeID}" level="H3" wrapping="true" />
                                         <Text id="roundRoute" text="{location}" class="wrRoute" />
