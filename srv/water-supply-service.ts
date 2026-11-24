@@ -9,6 +9,7 @@
  * and the part of its API this file uses is described in the small interfaces below.
  */
 import { startDemoSensorFeed } from './lib/demo-freshness';
+import { morningRound, type LandmarkInput, type MorningRoundItem, type PipeInput, type SensorInput } from './lib/morning-round';
 
 // 👋 EXAMPLE — the shape of a WaterPipes row as our handler sees it. Every field is optional:
 //    the client decides which fields it asks for ($select).
@@ -22,6 +23,7 @@ interface PipeRow {
 interface CdsService {
   init(): Promise<void>;
   after(event: string, entity: string, handler: (results: unknown) => unknown): void;
+  on(event: string, entity: string, handler: () => unknown): void;
 }
 
 /** The slice of the `cds` facade this file uses. */
@@ -30,7 +32,7 @@ interface CdsApi {
   readonly ql: {
     readonly SELECT: {
       from(entity: string): {
-        columns(...columns: readonly string[]): {
+        columns(...columns: readonly string[]): PromiseLike<unknown[]> & {
           where(predicate: Readonly<Record<string, unknown>>): PromiseLike<PipeRow[]>;
         };
       };
@@ -81,8 +83,22 @@ async function addDaysSinceMaintenance(results: unknown): Promise<void> {
   }
 }
 
+/** Reads the three inputs (one query each) and computes the round against the current time. */
+async function readMorningRound(): Promise<MorningRoundItem[]> {
+  const [pipes, sensors, landmarks] = await Promise.all([
+    SELECT.from('oakhaven.curse.WaterPipes').columns(
+      'ID', 'pipeID', 'location', 'startPoint', 'endPoint', 'nominalFlowRate', 'currentFlowRate', 'currentPressure', 'lastMaintenance', 'mapPath',
+    ),
+    SELECT.from('oakhaven.curse.Sensors').columns('pipe_ID', 'sensorID', 'flowRate', 'pressure', 'lastReading'),
+    SELECT.from('oakhaven.curse.Landmarks').columns('name', 'kind', 'suppliedBy'),
+  ]);
+  // shortcut: ignores $filter/$orderby/$top and single-key reads — the UI reads the whole (6-row) list.
+  return morningRound(pipes as PipeInput[], sensors as SensorInput[], landmarks as LandmarkInput[], new Date());
+}
+
 export default class WaterSupplyService extends cds.ApplicationService {
   override async init(): Promise<void> {
+    this.on('READ', 'MorningRound', readMorningRound);
     // 👋 EXAMPLE — register the handler: after every READ of WaterPipes, add daysSinceMaintenance.
     this.after('READ', 'WaterPipes', addDaysSinceMaintenance);
 

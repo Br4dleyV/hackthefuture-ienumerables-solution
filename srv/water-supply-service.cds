@@ -24,4 +24,34 @@ service WaterSupplyService @(path: 'water-supply', impl: 'srv/water-supply-servi
 
   @readonly
   entity Landmarks  as projection on db.Landmarks;
+
+  /**
+   * Maren's morning round: every pipe, in visiting order, with status and the "why" inputs.
+   * No table (`@cds.persistence.skip`): computed on every READ from pipes + sensors + landmarks
+   * in water-supply-service.ts → srv/lib/morning-round.ts. Try /odata/v4/water-supply/MorningRound
+   */
+  @readonly @cds.persistence.skip
+  entity MorningRound {
+    key pipeID           : String;
+        rank             : Integer;
+        status           : String;  // EMERGENCY | WORRY | CHECK | UNKNOWN | OK
+        reasonCode       : String;  // READINGS | NO_SENSOR | MISSING | STALE | NEGATIVE | OVER_NOMINAL | SENSOR_VS_PIPE
+        location         : String;
+        sensorID         : String;
+        flowPercent      : Integer;        // sensor flow / nominal, rounded
+        sensorFlow       : Decimal(15, 2); // L/min
+        sensorPressure   : Decimal(15, 2); // PSI
+        nominalFlow      : Decimal(9, 2);  // L/min
+        pipeFlow         : Decimal(9, 2);  // L/min — the pipe record's own value, for comparison
+        pipePressure     : Decimal(9, 2);  // PSI
+        readingAt        : DateTime;
+        readingAgeMinutes: Integer;
+        affectedLandmarks: String;
+        impactLandmark   : String;
+        impactKind       : String;
+        families         : Integer;
+        lastMaintenance  : DateTime;
+        daysSinceMaintenance : Integer;
+        mapPath          : String;
+  }
 }

@@ -1,0 +1,21 @@
+/* Morning round — big and readable on a phone in a field. Theme parameters only. */
+
+.wrItem {
+    padding: 1rem 0.5rem;
+    min-height: 4rem;
+}
+
+.wrRank {
+    font-size: 2.5rem;
+    min-width: 3rem;
+    margin-right: 0.75rem;
+    color: var(--sapContent_LabelColor);
+}
+
+.wrRoute {
+    color: var(--sapContent_LabelColor);
+}
+
+.wrWhy {
+    font-size: 1.125rem;
+}
