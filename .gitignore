@@ -15,3 +15,6 @@ coverage/
 
 # Local AI-assistant settings
 .claude/settings.local.json
+
+# Docker image exports (too big for GitHub)
+*.tar
