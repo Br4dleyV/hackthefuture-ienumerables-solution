@@ -9,13 +9,13 @@ export interface AuditRecord {
 interface LedgerRecord extends AuditRecord {
   recordName: string;
   recordType: 'SENSOR' | 'PIPE' | 'STOCK' | 'REPAIR';
-  evidence: 'OVER_CAPACITY' | 'FLOW_MISMATCH' | 'NEGATIVE_STOCK' | 'NONE';
+  evidence: 'OVER_CAPACITY' | 'FLOW_MISMATCH' | 'CLASHES_WITH_SENSOR' | 'NEGATIVE_STOCK' | 'NONE';
   observed?: number | null;
   pipeFlow?: number | null;
   capacity?: number | null;
 }
 
-interface LedgerRow extends LedgerRecord {
+export interface LedgerRow extends LedgerRecord {
   nightEdit: boolean;
   systemEdit: boolean;
   unnamedEdit: boolean;
@@ -23,12 +23,16 @@ interface LedgerRow extends LedgerRecord {
   councilCandidate: boolean;
 }
 
+/** Seconds precision ("2026-11-17T03:13:00Z"), like every other date in the app — UI5 shows it as a date. */
+const toSeconds = (at: Date): string => `${at.toISOString().slice(0, 19)}Z`;
+
 export function assessLedger(records: LedgerRecord[]): LedgerRow[] {
   const rows = records.map((record) => {
     const timestamp = record.modifiedAt ? new Date(record.modifiedAt) : null;
     const hour = timestamp?.getUTCHours();
     return {
       ...record,
+      modifiedAt: timestamp && Number.isFinite(timestamp.getTime()) ? toSeconds(timestamp) : null,
       nightEdit: hour !== undefined && hour < 4,
       systemEdit: record.modifiedBy?.trim().toLowerCase() === 'system',
       unnamedEdit: !record.modifiedBy?.trim(),
@@ -45,6 +49,31 @@ export function assessLedger(records: LedgerRecord[]): LedgerRow[] {
     return { ID, recordName, recordType, evidence, observed, capacity, pipeFlow, modifiedAt, modifiedBy,
       nightEdit, systemEdit, unnamedEdit, relatedCount, councilCandidate: relatedCount > 0 && evidence !== 'NONE' };
   }).sort((a, b) => Number(b.councilCandidate) - Number(a.councilCandidate) || (b.modifiedAt ?? '').localeCompare(a.modifiedAt ?? ''));
+}
+
+/** Ilse: "when it all started, and whether it happened at once or bit by bit". */
+export interface LedgerTimeline {
+  ID: string;
+  /** Odd changes = changed at night, under a system account or without a name. */
+  oddChanges: number;
+  firstChange: string | null;
+  lastChange: string | null;
+  /** Different nights (record dates) the odd changes fall on: 1 = all at once. */
+  nights: number;
+}
+
+export function ledgerTimeline(rows: readonly LedgerRow[]): LedgerTimeline {
+  const odd = rows
+    .filter((row) => (row.nightEdit || row.systemEdit || row.unnamedEdit) && row.modifiedAt)
+    .map((row) => toSeconds(new Date(row.modifiedAt ?? '')))
+    .sort();
+  return {
+    ID: 'trail',
+    oddChanges: odd.length,
+    firstChange: odd[0] ?? null,
+    lastChange: odd[odd.length - 1] ?? null,
+    nights: new Set(odd.map((at) => at.slice(0, 10))).size,
+  };
 }
 
 export function ledgerEvidence(
@@ -65,9 +94,18 @@ export function ledgerEvidence(
         ? 'FLOW_MISMATCH' : 'NONE';
     return { ...sensor, recordType: 'SENSOR', recordName: pipe ? `${sensor.sensorID} · ${pipe.pipeID}` : sensor.sensorID, evidence, observed, pipeFlow, capacity };
   });
+  // Ilse: "when a pipe and its sensor clash, mark both as not to be trusted" — so the pipe line shows up too.
+  const clashBySensorPipe = new Map(
+    sensorRows.filter((row) => row.evidence !== 'NONE').map((row) => [(row as LedgerRecord & { pipe_ID: string }).pipe_ID, row]),
+  );
   return assessLedger([
     ...sensorRows,
-    ...pipes.map((pipe): LedgerRecord => ({ ...pipe, recordType: 'PIPE', recordName: pipe.pipeID, evidence: 'NONE' })),
+    ...pipes.map((pipe): LedgerRecord => {
+      const clash = clashBySensorPipe.get(pipe.ID);
+      return clash
+        ? { ...pipe, recordType: 'PIPE', recordName: pipe.pipeID, evidence: 'CLASHES_WITH_SENSOR', observed: clash.observed, pipeFlow: clash.pipeFlow, capacity: clash.capacity }
+        : { ...pipe, recordType: 'PIPE', recordName: pipe.pipeID, evidence: 'NONE' };
+    }),
     ...stock.map((item): LedgerRecord => ({ ...item, recordType: 'STOCK', recordName: item.name,
       evidence: item.currentQuantity !== null && item.currentQuantity < 0 ? 'NEGATIVE_STOCK' : 'NONE', observed: item.currentQuantity })),
     ...repairs.map((repair): LedgerRecord => ({ ...repair, recordType: 'REPAIR', recordName: repair.issue, evidence: 'NONE' })),

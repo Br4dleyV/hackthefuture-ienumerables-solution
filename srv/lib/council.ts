@@ -95,6 +95,11 @@ export interface BudgetRow {
   left: number;
   /** When the council last printed the page — what "better or worse" is compared with. */
   comparedWith: string | null;
+  /** How many parts of the village are at each level — the big picture in four numbers. */
+  areasUrgent: number;
+  areasUnsure: number;
+  areasWorry: number;
+  areasOk: number;
 }
 
 /**
@@ -232,7 +237,15 @@ export function councilActions(
 }
 
 /** The big picture in one line: "spend X of the 500 crowns, Y left". */
-export function councilBudget(actions: readonly ActionRow[], comparedWith: string | null = null): BudgetRow {
+export function councilBudget(
+  actions: readonly ActionRow[],
+  comparedWith: string | null = null,
+  areas: readonly AreaRow[] = [],
+): BudgetRow {
   const spend = actions.filter((a) => a.fits).reduce((sum, a) => sum + a.cost, 0);
-  return { ID: 'week', total: WEEKLY_BUDGET, spend, left: WEEKLY_BUDGET - spend, comparedWith };
+  const count = (level: Level): number => areas.filter((a) => a.level === level).length;
+  return {
+    ID: 'week', total: WEEKLY_BUDGET, spend, left: WEEKLY_BUDGET - spend, comparedWith,
+    areasUrgent: count('URGENT'), areasUnsure: count('UNKNOWN'), areasWorry: count('WORRY'), areasOk: count('OK'),
+  };
 }

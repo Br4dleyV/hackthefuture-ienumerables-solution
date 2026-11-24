@@ -71,7 +71,7 @@ async function readAreas(): Promise<AreaRow[]> {
 
 async function readBudget(): Promise<BudgetRow[]> {
   const [village, printed] = await Promise.all([readVillage(), lastPrinted()]);
-  return [councilBudget(councilActions(...village), printed.at)];
+  return [councilBudget(councilActions(...village), printed.at, councilAreas(...village, printed.levels))];
 }
 
 /** Remembers what the council saw on the page it just printed. */

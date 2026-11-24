@@ -75,7 +75,9 @@ assert.deepEqual(
 );
 // The backup loop waits (nobody depends on it): its 120 crowns stay in reserve.
 assert.deepEqual(actions.map((a) => a.advice), ['PAY', 'NO_CROWNS', 'NO_CROWNS', 'PAY', 'NO_CROWNS', 'CAN_WAIT']);
-assert.deepEqual(councilBudget(actions), { ID: 'week', total: 500, spend: 240, left: 260, comparedWith: null });
+assert.deepEqual(councilBudget(actions, null, councilAreas(round, served, food)), {
+  ID: 'week', total: 500, spend: 240, left: 260, comparedWith: null, areasUrgent: 1, areasUnsure: 1, areasWorry: 1, areasOk: 3,
+});
 
 // 500 crowns: four repairs fit (480), the fifth is "not this week"; the loop still waits.
 const broken = pipes.map((p) => ({ ...p, currentFlowRate: 1, currentPressure: 1 }));

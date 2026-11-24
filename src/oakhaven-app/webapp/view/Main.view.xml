@@ -211,6 +211,36 @@
                     <IconTabFilter id="tabLedger" key="ledger" icon="sap-icon://inspect" text="{i18n>tabLedger}">
                         <VBox id="ledgerContent">
                             <MessageStrip id="ledgerGuide" text="{i18n>ledgerGuide}" showIcon="true" class="sapUiSmallMarginBottom" />
+
+                            <!-- Ilse: "when it all started, and whether it happened at once or bit by bit" -->
+                            <List id="ledgerTimelineList" showNoData="false" class="sapUiSmallMarginBottom"
+                                items="{ path: '/LedgerTimeline', templateShareable: false }">
+                                <CustomListItem id="ledgerTimelineItem">
+                                    <HBox id="ledgerTimelineBox" wrap="Wrap" alignItems="Center" class="sapUiSmallMargin">
+                                        <ObjectStatus id="ledgerStarted" class="sapMObjectStatusLarge sapUiMediumMarginEnd" icon="sap-icon://ti/clock" state="Warning"
+                                            visible="{= !!%{firstChange} }"
+                                            text="{ parts: ['i18n>ledgerStarted', { path: 'firstChange', type: 'DateTimeOffset', formatOptions: { style: 'medium', UTC: true } }], formatter: 'formatMessage' }" />
+                                        <ObjectStatus id="ledgerOddCount" class="sapMObjectStatusLarge sapUiMediumMarginEnd" icon="sap-icon://ti/list-search"
+                                            text="{ parts: ['i18n>ledgerOddCount', 'oddChanges'], formatter: 'formatMessage' }" />
+                                        <ObjectStatus id="ledgerOneNight" class="sapMObjectStatusLarge" icon="sap-icon://ti/moon" state="Error"
+                                            visible="{= %{nights} === 1 }" text="{i18n>ledgerOneNight}" />
+                                        <ObjectStatus id="ledgerManyNights" class="sapMObjectStatusLarge" icon="sap-icon://ti/calendar" state="Warning"
+                                            visible="{= %{nights} > 1 }"
+                                            text="{ parts: ['i18n>ledgerManyNights', 'nights', { path: 'lastChange', type: 'DateTimeOffset', formatOptions: { style: 'medium', UTC: true } }], formatter: 'formatMessage' }" />
+                                    </HBox>
+                                </CustomListItem>
+                            </List>
+
+                            <!-- Ilse: "nothing hidden and nothing feels like magic" — every rule in plain words -->
+                            <VBox id="ledgerRules" class="sapUiSmallMarginBottom">
+                                <Title id="ledgerRulesTitle" text="{i18n>ledgerRulesTitle}" level="H3" class="sapUiTinyMarginBottom" />
+                                <Text id="ledgerRuleTime" text="{i18n>ledgerRuleTime}" />
+                                <Text id="ledgerRuleNight" text="{i18n>ledgerRuleNight}" />
+                                <Text id="ledgerRuleName" text="{i18n>ledgerRuleName}" />
+                                <Text id="ledgerRuleImpossible" text="{i18n>ledgerRuleImpossible}" />
+                                <Text id="ledgerRuleClash" text="{i18n>ledgerRuleClash}" />
+                                <Text id="ledgerRulePattern" text="{i18n>ledgerRulePattern}" />
+                            </VBox>
                             <Table id="ledgerTable" noDataText="{i18n>noData}" items="{ path: '/LedgerEvidence', templateShareable: false }">
                                 <columns>
                                     <Column id="ledgerNameCol"><Text id="ledgerNameHdr" text="{i18n>ledgerRecord}" /></Column>
@@ -222,7 +252,9 @@
                                         <cells>
                                             <VBox id="ledgerRecordCell">
                                                 <ObjectIdentifier id="ledgerName" title="{recordName}" />
-                                                <ObjectStatus id="ledgerCandidate" text="{= %{councilCandidate} ? %{i18n>ledgerCandidate} : %{i18n>ledgerReview} }" state="Warning" icon="sap-icon://warning" />
+                                                <ObjectStatus id="ledgerCandidate" text="{= %{councilCandidate} ? %{i18n>ledgerCandidate} : %{i18n>ledgerReview} }"
+                                                    state="{= %{councilCandidate} ? 'Error' : 'Warning' }"
+                                                    icon="{= %{councilCandidate} ? 'sap-icon://ti/link' : 'sap-icon://ti/eye' }" />
                                             </VBox>
                                             <VBox id="ledgerAuditCell">
                                                 <Text id="ledgerEditor" text="{= %{unnamedEdit} ? %{i18n>ledgerUnnamed} : %{modifiedBy} }" />
@@ -232,8 +264,8 @@
                                                 <ObjectNumber id="ledgerRelated" number="{relatedCount}" unit="{i18n>ledgerRelated}" />
                                             </VBox>
                                             <VBox id="ledgerEvidenceCell">
-                                                <Text id="ledgerRule" text="{= %{evidence} === 'OVER_CAPACITY' ? %{i18n>ledgerCapacity} : %{evidence} === 'FLOW_MISMATCH' ? %{i18n>ledgerMismatch} : %{evidence} === 'NEGATIVE_STOCK' ? %{i18n>ledgerNegative} : %{i18n>ledgerAuditOnly} }" />
-                                                <HBox id="ledgerFlows" wrap="Wrap" visible="{= %{evidence} === 'OVER_CAPACITY' || %{evidence} === 'FLOW_MISMATCH' }">
+                                                <Text id="ledgerRule" text="{= %{evidence} === 'OVER_CAPACITY' ? %{i18n>ledgerCapacity} : %{evidence} === 'FLOW_MISMATCH' ? %{i18n>ledgerMismatch} : %{evidence} === 'CLASHES_WITH_SENSOR' ? %{i18n>ledgerClash} : %{evidence} === 'NEGATIVE_STOCK' ? %{i18n>ledgerNegative} : %{i18n>ledgerAuditOnly} }" />
+                                                <HBox id="ledgerFlows" wrap="Wrap" visible="{= %{evidence} === 'OVER_CAPACITY' || %{evidence} === 'FLOW_MISMATCH' || %{evidence} === 'CLASHES_WITH_SENSOR' }">
                                                     <ObjectNumber id="ledgerObserved" number="{observed}" unit="{i18n>ledgerSensorFlow}" class="sapUiTinyMarginEnd" />
                                                     <ObjectNumber id="ledgerPipeValue" number="{pipeFlow}" unit="{i18n>ledgerPipeFlow}" class="sapUiTinyMarginEnd" />
                                                     <ObjectNumber id="ledgerLimit" number="{capacity}" unit="{i18n>ledgerFlowLimit}" />

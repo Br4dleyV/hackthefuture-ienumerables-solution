@@ -34,13 +34,23 @@ service WaterSupplyService @(path: 'water-supply', impl: 'srv/water-supply-servi
         observed         : Decimal(15,2);
         pipeFlow         : Decimal(15,2);
         capacity         : Decimal(15,2);
-        modifiedAt       : Timestamp;
+        modifiedAt       : DateTime;
         modifiedBy       : String;
         nightEdit        : Boolean;
         systemEdit       : Boolean;
         unnamedEdit      : Boolean;
         relatedCount     : Integer;
         councilCandidate : Boolean;
+  }
+
+  /** Ilse: "when it all started, and whether it happened at once or bit by bit" — one row. */
+  @readonly @cds.persistence.skip
+  entity LedgerTimeline {
+    key ID          : String;
+        oddChanges  : Integer;   // changed at night, under a system account or without a name
+        firstChange : DateTime;
+        lastChange  : DateTime;
+        nights      : Integer;   // different record dates they fall on (1 = all at once)
   }
 
   /**

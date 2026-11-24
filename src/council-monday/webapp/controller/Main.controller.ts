@@ -114,6 +114,11 @@ export default class Main extends Controller {
     return this.text("crowns", [cost]);
   }
 
+  /** No "Urgent" next to "Can wait": a broken pipe nobody depends on is not urgent for the council. */
+  public showLevel(advice: Value): boolean {
+    return advice !== "CAN_WAIT";
+  }
+
   /** A note only for CAN_WAIT (backup pipe: crowns stay in reserve) and NO_BUDGET (500 crowns used up). */
   public hasNote(advice: Value): boolean {
     return advice === "CAN_WAIT" || advice === "NO_BUDGET";

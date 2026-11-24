@@ -79,7 +79,9 @@
                                 <Title id="actionTitle" level="H3" wrapping="true"
                                     text="{ parts: ['kind', 'target', 'fromPlace', 'toPlace', 'areas'], formatter: '.actionTitle' }" />
                                 <HBox id="actionMeta" alignItems="Center" wrap="Wrap">
+                                    <!-- Hidden for "can wait": the pipe may be broken, but for the council it is not urgent. -->
                                     <ObjectStatus id="actionLevel" class="sapUiSmallMarginEnd"
+                                        visible="{ path: 'advice', targetType: 'any', formatter: '.showLevel' }"
                                         text="{ path: 'level', formatter: '.levelText' }"
                                         icon="{ path: 'level', formatter: '.levelIcon' }"
                                         state="{ path: 'level', formatter: '.levelState' }" />

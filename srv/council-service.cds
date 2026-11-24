@@ -14,6 +14,10 @@ service CouncilService @(path: 'council', impl: 'srv/council-service') {
         spend : Integer;
         left  : Integer;
         comparedWith : DateTime; // when the council last printed the page (null: never)
+        areasUrgent  : Integer;  // number of village parts per level — the big picture in four numbers
+        areasUnsure  : Integer;
+        areasWorry   : Integer;
+        areasOk      : Integer;
   }
 
   /** The page was printed: remember what the council saw, to say "better or worse" next time. */

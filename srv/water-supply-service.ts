@@ -9,7 +9,7 @@
  * and the part of its API this file uses is described in the small interfaces below.
  */
 import { startDemoSensorFeed } from './lib/demo-freshness';
-import { ledgerEvidence } from './lib/ledger';
+import { ledgerEvidence, ledgerTimeline } from './lib/ledger';
 import { MISMATCH_TOLERANCE } from './lib/morning-round-config';
 import { morningRound, type LandmarkInput, type MorningRoundItem, type PipeInput, type SensorInput } from './lib/morning-round';
 
@@ -115,6 +115,7 @@ export default class WaterSupplyService extends cds.ApplicationService {
   override async init(): Promise<void> {
     this.on('READ', 'MorningRound', readMorningRound);
     this.on('READ', 'LedgerEvidence', readLedger);
+    this.on('READ', 'LedgerTimeline', async () => [ledgerTimeline(await readLedger())]);
     // 👋 EXAMPLE — register the handler: after every READ of WaterPipes, add daysSinceMaintenance.
     this.after('READ', 'WaterPipes', addDaysSinceMaintenance);
 
