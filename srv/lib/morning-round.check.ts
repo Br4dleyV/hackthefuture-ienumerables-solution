@@ -30,6 +30,7 @@ assert.equal(assess({ ID: 'p', pipeID: 'P', nominalFlowRate: null }, sensor(90, 
 
 // Rule 6 — impossible numbers → CHECK, never OK.
 assert.equal(assess(pipe(50), sensor(140, 47), now).reasonCode, 'OVER_NOMINAL');
+assert.equal(assess(pipe(50), sensor(100, 47), now).status, 'OK'); // exactly double: Ilse only said "more than double" is impossible
 assert.equal(assess(pipe(100), sensor(-1, 60), now).reasonCode, 'NEGATIVE');
 assert.equal(assess({ ...pipe(100), currentFlowRate: 90 }, sensor(60, 60), now).reasonCode, 'SENSOR_VS_PIPE');
 
@@ -56,7 +57,8 @@ const landmarks = [
 const round = morningRound(pipes, sensors, landmarks, now);
 assert.deepEqual(
   round.map((i) => `${i.pipeID}:${i.status}`),
-  ['NORTH-BRANCH-02:EMERGENCY', 'SECONDARY-LOOP:EMERGENCY', 'SOUTH-BRANCH:WORRY', 'BAKERY-BRANCH:CHECK', 'PRIMARY-MAIN:OK', 'NORTH-BRANCH-01:OK'],
+  // Backup loop last of the visits even in alarm (Maren); clashing numbers before "visit this week" (Ilse + Maren).
+  ['NORTH-BRANCH-02:EMERGENCY', 'BAKERY-BRANCH:CHECK', 'SOUTH-BRANCH:WORRY', 'SECONDARY-LOOP:EMERGENCY', 'PRIMARY-MAIN:OK', 'NORTH-BRANCH-01:OK'],
 );
 assert.equal(round[0].families, 140);
 assert.equal(round[0].flowPercent, 31);
@@ -70,5 +72,10 @@ assert.deepEqual(sameLine.slice(0, 2).map((i) => i.pipeID), ['NORTH-BRANCH-01', 
 // A sensor that stops reporting turns its pipe UNKNOWN, never OK.
 const silent = morningRound(pipes, sensors.map((s) => (s.pipe_ID === '1' ? { ...s, lastReading: ago(16 * 60_000) } : s)), landmarks, now);
 assert.equal(silent.find((i) => i.pipeID === 'PRIMARY-MAIN')?.status, 'UNKNOWN');
+// Maren: "I don't know" comes after the emergencies, before "visit this week".
+assert.deepEqual(
+  silent.slice(0, 5).map((i) => `${i.pipeID}:${i.status}`),
+  ['NORTH-BRANCH-02:EMERGENCY', 'PRIMARY-MAIN:UNKNOWN', 'BAKERY-BRANCH:CHECK', 'SOUTH-BRANCH:WORRY', 'SECONDARY-LOOP:EMERGENCY'],
+);
 
 console.log('morning-round checks OK');

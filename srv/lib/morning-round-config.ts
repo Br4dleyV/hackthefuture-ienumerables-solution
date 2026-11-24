@@ -19,22 +19,23 @@ export const ROOT_LANDMARK = 'Silverbrook Spring';
 export const NOBODY_DOWNSTREAM = '(nobody downstream)';
 
 // Maren said: on different lines, people first — homes, then bakery, then farm.
-// OPEN QUESTION — confirm with Maren: where does the backup loop (SECONDARY-LOOP) go? For now: after the farm.
+// Maren said: the backup loop always comes last, even in alarm — nobody depends on it (see morning-round.ts sort).
 export const PEOPLE_FIRST: readonly string[] = ['North Residential Area', 'The Bakery', 'South Meadow Farms', NOBODY_DOWNSTREAM];
 
 // Maren said: ~140 families live in North Residential.
 export const FAMILIES_BY_LANDMARK: Readonly<Record<string, number>> = { 'North Residential Area': 140 };
 
-// OPEN QUESTION — confirm with Maren: where do UNKNOWN pipes go? For now: own section below the urgent ones.
-// (CHECK = "numbers don't add up — check with Ilse".) Reorder this list to move a whole section.
-export const STATUS_ORDER = ['EMERGENCY', 'WORRY', 'CHECK', 'UNKNOWN', 'OK'] as const;
+// Maren said: an emergency always comes first, whoever sits behind it; "I don't know" goes after the
+// emergencies but before "visit this week" — someone has to go and look.
+// Ilse said: when sensor and pipe clash, trust neither until Maren has checked → CHECK sits with UNKNOWN.
+export const STATUS_ORDER = ['EMERGENCY', 'UNKNOWN', 'CHECK', 'WORRY', 'OK'] as const;
 
-// OPEN QUESTION — confirm with Maren: what weighs more, severity or who is behind the pipe?
-// true = severity first, then upstream/people. false = who is behind it first, then severity.
-export const SEVERITY_FIRST = true;
-
-// OPEN QUESTION — confirm with Maren: how many pipes can the crew do in one morning? 0 = show the whole list.
+// Maren said: one crew, two repairs a day at most (one morning, one afternoon).
+// OPEN QUESTION — confirm with Maren: show only that many, or the whole list? For now: 0 = the whole list.
 export const CREW_CAPACITY = 0;
 
-// OPEN QUESTION — confirm with Maren/Ilse: when do sensor and pipe values "clearly" disagree? For now: > 20 %.
+// Ilse said: a sensor showing more than double what its pipe can carry cannot be true.
+export const IMPOSSIBLE_FLOW_FACTOR = 2;
+
+// Our choice (Ilse: "that's for Maren and for you to decide"): sensor and pipe record clash when > 20 % apart.
 export const MISMATCH_TOLERANCE = 0.2;

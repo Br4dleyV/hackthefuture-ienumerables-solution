@@ -7,11 +7,11 @@ import {
   EMERGENCY_FLOW_PERCENT,
   EMERGENCY_PRESSURE_PSI,
   FAMILIES_BY_LANDMARK,
+  IMPOSSIBLE_FLOW_FACTOR,
   MISMATCH_TOLERANCE,
   NOBODY_DOWNSTREAM,
   PEOPLE_FIRST,
   ROOT_LANDMARK,
-  SEVERITY_FIRST,
   STALE_AFTER_MS,
   STATUS_ORDER,
   WORRY_FLOW_PERCENT,
@@ -113,7 +113,7 @@ export function assess(pipe: PipeInput, sensor: SensorInput | undefined, now: Da
 
   const check = (reasonCode: ReasonCode): Assessment => ({ status: 'CHECK', reasonCode, flowPercent });
   if (flow < 0 || pressure < 0) return check('NEGATIVE');
-  if (flow > nominal) return check('OVER_NOMINAL');
+  if (flow > nominal * IMPOSSIBLE_FLOW_FACTOR) return check('OVER_NOMINAL');
   const pipeFlow = num(pipe.currentFlowRate);
   const pipePressure = num(pipe.currentPressure);
   if ((pipeFlow !== null && differsClearly(flow, pipeFlow)) || (pipePressure !== null && differsClearly(pressure, pipePressure))) {
@@ -209,6 +209,8 @@ export function morningRound(
     };
     return {
       item,
+      // Maren: the backup loop always comes last of the visits, even in alarm — nobody depends on it.
+      lastVisit: status !== 'OK' && !impact ? 1 : 0,
       severity: STATUS_ORDER.indexOf(status),
       people: impact ? priorityOf(impact.name) : priorityOf(NOBODY_DOWNSTREAM),
       depth: depth.get(pipe.ID) ?? Number.MAX_SAFE_INTEGER,
@@ -217,9 +219,13 @@ export function morningRound(
 
   // Rule 3 (upstream first) via depth: an upstream pipe has everyone of its downstream pipe behind
   // it too, so its people-priority is never worse — comparing depth after people is enough.
+  const isOk = (row: { item: MorningRoundItem }): number => (row.item.status === 'OK' ? 1 : 0);
   rows.sort(
     (a, b) =>
-      (SEVERITY_FIRST ? a.severity - b.severity || a.people - b.people : a.people - b.people || a.severity - b.severity) ||
+      isOk(a) - isOk(b) ||
+      a.lastVisit - b.lastVisit ||
+      a.severity - b.severity ||
+      a.people - b.people ||
       a.depth - b.depth ||
       a.item.pipeID.localeCompare(b.item.pipeID),
   );

@@ -26,8 +26,9 @@ const ICON: Record<string, string> = {
 const SECTION: Record<string, string> = {
   EMERGENCY: "sectionUrgent",
   WORRY: "sectionUrgent",
-  CHECK: "sectionCheck",
-  UNKNOWN: "sectionUnknown",
+  // Maren: "someone has to go and look"; Ilse: clashing numbers can't be trusted until Maren checks.
+  CHECK: "sectionUrgent",
+  UNKNOWN: "sectionUrgent",
   OK: "sectionOk",
 };
 
