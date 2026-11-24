@@ -12,6 +12,7 @@ service FoodStockService @(path: 'food-stock', impl: 'srv/food-stock-service') {
     *,
     virtual null as stockStatus    : String,
     virtual null as daysUntilEmpty : Decimal(15,2),
+    virtual null as daysUntilMinimum : Decimal(9,1),
     virtual null as orderBy        : Date,
     virtual null as orderQuantity  : Decimal(15,2),
     virtual null as orderLate      : Boolean,

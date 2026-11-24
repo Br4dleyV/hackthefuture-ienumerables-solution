@@ -11,6 +11,8 @@ export interface PantryStock {
 interface Outlook {
   stockStatus: 'OK' | 'WORRIED' | 'PANIC' | 'UNKNOWN';
   daysUntilEmpty: number | null;
+  /** Days until stock drops below the minimum (0 = already below); shown next to the lead time. */
+  daysUntilMinimum: number | null;
   orderBy: string | null;
   orderQuantity: number | null;
   orderLate: boolean;
@@ -29,7 +31,7 @@ function supplier(item: string): [string, number] {
 
 export function pantryOutlook(stock: PantryStock, now: Date): Outlook {
   const [supplierName, leadDays] = supplier(stock.itemID);
-  const result: Outlook = { stockStatus: 'UNKNOWN', daysUntilEmpty: null, orderBy: null, orderQuantity: null, orderLate: false, supplierName, leadDays };
+  const result: Outlook = { stockStatus: 'UNKNOWN', daysUntilEmpty: null, daysUntilMinimum: null, orderBy: null, orderQuantity: null, orderLate: false, supplierName, leadDays };
   const inputs = [stock.currentQuantity, stock.minStockLevel, stock.consumptionRate];
   if (inputs.some((value) => value === null || value === '' || !Number.isFinite(Number(value)) || Number(value) < 0)) return result;
   const [quantity, minimum, daily] = inputs.map(Number);
@@ -78,6 +80,7 @@ export function pantryOutlook(stock: PantryStock, now: Date): Outlook {
   }
 
   if (daily > 0) result.daysUntilEmpty = Math.floor((reaches(quantity) - start) / DAY * 100) / 100;
+  if (daily > 0) result.daysUntilMinimum = quantity < minimum ? 0 : Math.floor((reaches(quantity - minimum) - start) / DAY * 10) / 10;
   if (daily === 0 && quantity >= minimum) return result;
   const deadline = quantity < minimum ? start - 1 : reaches(quantity - minimum) - leadDays * DAY;
   const morning = Math.floor((deadline - 5 * 3_600_000) / DAY) * DAY + 5 * 3_600_000;

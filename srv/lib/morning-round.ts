@@ -156,6 +156,23 @@ function buildTree(pipes: readonly PipeInput[]): { depth: Map<string, number>; c
   return { depth, children };
 }
 
+/**
+ * Per pipe: every landmark it brings water to — its own end point and those further down the line,
+ * plus the areas it or a downstream pipe supplies (`Landmarks.suppliedBy`). Used by the council page.
+ */
+export function servedLandmarks(pipes: readonly PipeInput[], landmarks: readonly LandmarkInput[]): Map<string, Set<string>> {
+  const { children } = buildTree(pipes);
+  const line = (pipe: PipeInput): PipeInput[] => [pipe, ...(children.get(pipe.ID) ?? []).flatMap(line)];
+  return new Map(
+    pipes.map((pipe) => {
+      const down = line(pipe);
+      const ids = new Set(down.map((p) => p.pipeID));
+      const supplied = landmarks.filter((l) => l.suppliedBy && ids.has(l.suppliedBy)).map((l) => l.name);
+      return [pipe.pipeID, new Set([...down.flatMap((p) => (p.endPoint ? [p.endPoint] : [])), ...supplied])];
+    }),
+  );
+}
+
 export function morningRound(
   pipes: readonly PipeInput[],
   sensors: readonly SensorInput[],

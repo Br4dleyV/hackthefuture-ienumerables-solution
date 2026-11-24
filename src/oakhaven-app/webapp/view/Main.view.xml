@@ -4,7 +4,7 @@
     xmlns:mvc="sap.ui.core.mvc"
     xmlns:f="sap.f"
     xmlns:core="sap.ui.core"
-    core:require="{ DateTimeOffset: 'sap/ui/model/odata/type/DateTimeOffset', ODataDate: 'sap/ui/model/odata/type/Date' }"
+    core:require="{ DateTimeOffset: 'sap/ui/model/odata/type/DateTimeOffset', ODataDate: 'sap/ui/model/odata/type/Date', formatMessage: 'sap/base/strings/formatMessage' }"
     displayBlock="true"
     height="100%">
     <f:DynamicPage id="page" toggleHeaderOnTitleClick="true">
@@ -193,10 +193,13 @@
                                             icon="{= %{food>stockStatus} === 'PANIC' ? 'sap-icon://error' : %{food>stockStatus} === 'WORRIED' ? 'sap-icon://warning' : %{food>stockStatus} === 'OK' ? 'sap-icon://accept' : 'sap-icon://hint' }" />
                                         <ObjectNumber id="stockRunwayValue" number="{food>daysUntilEmpty}" unit="{i18n>unitDays}" visible="{= %{food>daysUntilEmpty} !== null }" />
                                         <VBox id="stockOrderDetails" visible="{= !!%{food>orderBy} }">
-                                            <ObjectStatus id="stockLate" visible="{food>orderLate}" text="{i18n>stockOrderLate}" state="Error" icon="sap-icon://error" />
+                                            <ObjectStatus id="stockLate" visible="{= %{food>orderLate} &amp;&amp; %{food>daysUntilMinimum} > 0 }" state="Error" icon="sap-icon://error"
+                                                text="{ parts: ['i18n>stockOrderLate', { path: 'food>daysUntilMinimum', targetType: 'any' }, 'food>leadDays'], formatter: 'formatMessage' }" />
+                                            <ObjectStatus id="stockLateBelow" visible="{= %{food>orderLate} &amp;&amp; !(%{food>daysUntilMinimum} > 0) }" state="Error" icon="sap-icon://error"
+                                                text="{ parts: ['i18n>stockOrderLateBelow', 'food>leadDays'], formatter: 'formatMessage' }" />
                                             <Text id="stockDeadline" text="{path: 'food>orderBy', type: 'ODataDate', formatOptions: {style: 'medium'}}" />
                                             <ObjectNumber id="stockOrderAmount" number="{food>orderQuantity}" unit="{food>unit}" />
-                                            <Text id="stockSupplier" text="{food>supplierName}" />
+                                            <Text id="stockSupplier" text="{ parts: ['i18n>stockSupplierLead', 'food>supplierName', 'food>leadDays'], formatter: 'formatMessage' }" />
                                         </VBox>
                                         <Button id="stockReceiveButton" icon="sap-icon://ti/truck-delivery" text="{i18n>stockReceive}" press=".onReceiveDelivery" />
                                     </cells>
