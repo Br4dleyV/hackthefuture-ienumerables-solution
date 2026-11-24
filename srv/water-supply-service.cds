@@ -25,6 +25,24 @@ service WaterSupplyService @(path: 'water-supply', impl: 'srv/water-supply-servi
   @readonly
   entity Landmarks  as projection on db.Landmarks;
 
+  @readonly @cds.persistence.skip
+  entity LedgerEvidence {
+    key ID               : UUID;
+        recordName       : String;
+        recordType       : String;
+        evidence         : String;
+        observed         : Decimal(15,2);
+        pipeFlow         : Decimal(15,2);
+        capacity         : Decimal(15,2);
+        modifiedAt       : Timestamp;
+        modifiedBy       : String;
+        nightEdit        : Boolean;
+        systemEdit       : Boolean;
+        unnamedEdit      : Boolean;
+        relatedCount     : Integer;
+        councilCandidate : Boolean;
+  }
+
   /**
    * Maren's morning round: every pipe, in visiting order, with status and the "why" inputs.
    * No table (`@cds.persistence.skip`): computed on every READ from pipes + sensors + landmarks

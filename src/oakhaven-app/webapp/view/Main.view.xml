@@ -4,7 +4,7 @@
     xmlns:mvc="sap.ui.core.mvc"
     xmlns:f="sap.f"
     xmlns:core="sap.ui.core"
-    core:require="{ DateTimeOffset: 'sap/ui/model/odata/type/DateTimeOffset' }"
+    core:require="{ DateTimeOffset: 'sap/ui/model/odata/type/DateTimeOffset', ODataDate: 'sap/ui/model/odata/type/Date' }"
     displayBlock="true"
     height="100%">
     <f:DynamicPage id="page" toggleHeaderOnTitleClick="true">
@@ -162,6 +162,7 @@
 
                     <!-- ============================ Food stock (named model "food") ============================ -->
                     <IconTabFilter id="tabStock" key="stock" icon="sap-icon://ti/tools-kitchen-2" text="{i18n>tabStock}" count="{view>/counts/stockTable}">
+                        <MessageStrip id="stockGuide" text="{i18n>stockGuide}" showIcon="true" class="sapUiSmallMarginBottom" />
                         <Table
                             id="stockTable"
                             noDataText="{i18n>noData}"
@@ -172,6 +173,9 @@
                                 <Column id="stockQuantityCol" hAlign="End"><Text id="stockQuantityHdr" text="{i18n>stockQuantity}" /></Column>
                                 <Column id="stockMinCol" hAlign="End"><Text id="stockMinHdr" text="{i18n>stockMinLevel}" /></Column>
                                 <Column id="stockConsumptionCol" hAlign="End" minScreenWidth="Tablet" demandPopin="true"><Text id="stockConsumptionHdr" text="{i18n>stockConsumption}" /></Column>
+                                <Column id="stockStatusCol"><Text id="stockStatusHdr" text="{i18n>stockStatusHeading}" /></Column>
+                                <Column id="stockRunwayCol" minScreenWidth="Tablet" demandPopin="true"><Text id="stockRunwayHdr" text="{i18n>stockRunway}" /></Column>
+                                <Column id="stockOrderCol" minScreenWidth="Tablet" demandPopin="true"><Text id="stockOrderHdr" text="{i18n>stockOrder}" /></Column>
                             </columns>
                             <items>
                                 <ColumnListItem id="stockRow">
@@ -183,10 +187,59 @@
                                         <ObjectNumber id="stockQuantityCell" number="{food>currentQuantity}" unit="{food>unit}" />
                                         <ObjectNumber id="stockMinCell" number="{food>minStockLevel}" unit="{food>unit}" />
                                         <ObjectNumber id="stockConsumptionCell" number="{food>consumptionRate}" unit="{food>unit}" />
+                                        <ObjectStatus id="stockHealth" text="{= %{food>stockStatus} === 'PANIC' ? %{i18n>stockPanic} : %{food>stockStatus} === 'WORRIED' ? %{i18n>stockWorried} : %{food>stockStatus} === 'OK' ? %{i18n>stockOk} : %{i18n>stockUnknown} }"
+                                            state="{= %{food>stockStatus} === 'PANIC' ? 'Error' : %{food>stockStatus} === 'WORRIED' ? 'Warning' : %{food>stockStatus} === 'OK' ? 'Success' : 'Information' }"
+                                            icon="{= %{food>stockStatus} === 'PANIC' ? 'sap-icon://error' : %{food>stockStatus} === 'WORRIED' ? 'sap-icon://warning' : %{food>stockStatus} === 'OK' ? 'sap-icon://accept' : 'sap-icon://hint' }" />
+                                        <ObjectNumber id="stockRunwayValue" number="{food>daysUntilEmpty}" unit="{i18n>unitDays}" visible="{= %{food>daysUntilEmpty} !== null }" />
+                                        <VBox id="stockOrderDetails" visible="{= !!%{food>orderBy} }">
+                                            <ObjectStatus id="stockLate" visible="{food>orderLate}" text="{i18n>stockOrderLate}" state="Error" icon="sap-icon://error" />
+                                            <Text id="stockDeadline" text="{path: 'food>orderBy', type: 'ODataDate', formatOptions: {style: 'medium'}}" />
+                                            <ObjectNumber id="stockOrderAmount" number="{food>orderQuantity}" unit="{food>unit}" />
+                                            <Text id="stockSupplier" text="{food>supplierName}" />
+                                        </VBox>
                                     </cells>
                                 </ColumnListItem>
                             </items>
                         </Table>
+                    </IconTabFilter>
+
+                    <IconTabFilter id="tabLedger" key="ledger" icon="sap-icon://inspect" text="{i18n>tabLedger}">
+                        <VBox id="ledgerContent">
+                            <MessageStrip id="ledgerGuide" text="{i18n>ledgerGuide}" showIcon="true" class="sapUiSmallMarginBottom" />
+                            <Table id="ledgerTable" noDataText="{i18n>noData}" items="{ path: '/LedgerEvidence', templateShareable: false }">
+                                <columns>
+                                    <Column id="ledgerNameCol"><Text id="ledgerNameHdr" text="{i18n>ledgerRecord}" /></Column>
+                                    <Column id="ledgerAuditCol" minScreenWidth="Tablet" demandPopin="true"><Text id="ledgerAuditHdr" text="{i18n>ledgerAudit}" /></Column>
+                                    <Column id="ledgerEvidenceCol" minScreenWidth="Tablet" demandPopin="true"><Text id="ledgerEvidenceHdr" text="{i18n>ledgerEvidence}" /></Column>
+                                </columns>
+                                <items>
+                                    <ColumnListItem id="ledgerRow">
+                                        <cells>
+                                            <VBox id="ledgerRecordCell">
+                                                <ObjectIdentifier id="ledgerName" title="{recordName}" />
+                                                <ObjectStatus id="ledgerCandidate" text="{= %{councilCandidate} ? %{i18n>ledgerCandidate} : %{i18n>ledgerReview} }" state="Warning" icon="sap-icon://warning" />
+                                            </VBox>
+                                            <VBox id="ledgerAuditCell">
+                                                <Text id="ledgerEditor" text="{= %{unnamedEdit} ? %{i18n>ledgerUnnamed} : %{modifiedBy} }" />
+                                                <Text id="ledgerTime" text="{path: 'modifiedAt', type: 'DateTimeOffset', formatOptions: {style: 'medium', UTC: true}}" />
+                                                <Text id="ledgerNight" text="{i18n>ledgerNight}" visible="{nightEdit}" />
+                                                <Text id="ledgerSystem" text="{i18n>ledgerSystem}" visible="{systemEdit}" />
+                                                <ObjectNumber id="ledgerRelated" number="{relatedCount}" unit="{i18n>ledgerRelated}" />
+                                            </VBox>
+                                            <VBox id="ledgerEvidenceCell">
+                                                <Text id="ledgerRule" text="{= %{evidence} === 'OVER_CAPACITY' ? %{i18n>ledgerCapacity} : %{evidence} === 'FLOW_MISMATCH' ? %{i18n>ledgerMismatch} : %{evidence} === 'NEGATIVE_STOCK' ? %{i18n>ledgerNegative} : %{i18n>ledgerAuditOnly} }" />
+                                                <HBox id="ledgerFlows" wrap="Wrap" visible="{= %{evidence} === 'OVER_CAPACITY' || %{evidence} === 'FLOW_MISMATCH' }">
+                                                    <ObjectNumber id="ledgerObserved" number="{observed}" unit="{i18n>ledgerSensorFlow}" class="sapUiTinyMarginEnd" />
+                                                    <ObjectNumber id="ledgerPipeValue" number="{pipeFlow}" unit="{i18n>ledgerPipeFlow}" class="sapUiTinyMarginEnd" />
+                                                    <ObjectNumber id="ledgerLimit" number="{capacity}" unit="{i18n>ledgerFlowLimit}" />
+                                                </HBox>
+                                                <ObjectNumber id="ledgerNegativeValue" number="{observed}" visible="{= %{evidence} === 'NEGATIVE_STOCK' }" />
+                                            </VBox>
+                                        </cells>
+                                    </ColumnListItem>
+                                </items>
+                            </Table>
+                        </VBox>
                     </IconTabFilter>
 
                     <IconTabSeparator id="tabSeparatorMap" />

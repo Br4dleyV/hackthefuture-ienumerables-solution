@@ -9,6 +9,8 @@
  * and the part of its API this file uses is described in the small interfaces below.
  */
 import { startDemoSensorFeed } from './lib/demo-freshness';
+import { ledgerEvidence } from './lib/ledger';
+import { MISMATCH_TOLERANCE } from './lib/morning-round-config';
 import { morningRound, type LandmarkInput, type MorningRoundItem, type PipeInput, type SensorInput } from './lib/morning-round';
 
 // 👋 EXAMPLE — the shape of a WaterPipes row as our handler sees it. Every field is optional:
@@ -96,9 +98,23 @@ async function readMorningRound(): Promise<MorningRoundItem[]> {
   return morningRound(pipes as PipeInput[], sensors as SensorInput[], landmarks as LandmarkInput[], new Date());
 }
 
+async function readLedger(): Promise<ReturnType<typeof ledgerEvidence>> {
+  const audit = ['ID', 'modifiedAt', 'modifiedBy'];
+  const [pipes, sensors, stock, repairs] = await Promise.all([
+    SELECT.from('oakhaven.curse.WaterPipes').columns(...audit, 'pipeID', 'nominalFlowRate', 'currentFlowRate'),
+    SELECT.from('oakhaven.curse.Sensors').columns(...audit, 'sensorID', 'pipe_ID', 'flowRate'),
+    SELECT.from('oakhaven.curse.StockItems').columns(...audit, 'name', 'currentQuantity'),
+    SELECT.from('oakhaven.curse.Repairs').columns(...audit, 'issue'),
+  ]);
+  // The ledger is a small read-only snapshot; the UI requests the whole list.
+  return ledgerEvidence(pipes as Parameters<typeof ledgerEvidence>[0], sensors as Parameters<typeof ledgerEvidence>[1],
+    stock as Parameters<typeof ledgerEvidence>[2], repairs as Parameters<typeof ledgerEvidence>[3], MISMATCH_TOLERANCE);
+}
+
 export default class WaterSupplyService extends cds.ApplicationService {
   override async init(): Promise<void> {
     this.on('READ', 'MorningRound', readMorningRound);
+    this.on('READ', 'LedgerEvidence', readLedger);
     // 👋 EXAMPLE — register the handler: after every READ of WaterPipes, add daysSinceMaintenance.
     this.after('READ', 'WaterPipes', addDaysSinceMaintenance);
 

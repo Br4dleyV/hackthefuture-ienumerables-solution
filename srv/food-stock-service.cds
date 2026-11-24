@@ -8,7 +8,16 @@ using { oakhaven.curse as db } from '../db/schema';
 service FoodStockService @(path: 'food-stock', impl: 'srv/food-stock-service') {
 
   @readonly
-  entity StockItems     as projection on db.StockItems;
+  entity StockItems as projection on db.StockItems {
+    *,
+    virtual null as stockStatus    : String,
+    virtual null as daysUntilEmpty : Decimal(15,2),
+    virtual null as orderBy        : Date,
+    virtual null as orderQuantity  : Decimal(15,2),
+    virtual null as orderLate      : Boolean,
+    virtual null as supplierName   : String,
+    virtual null as leadDays       : Integer
+  };
 
   @readonly
   entity StockReceivals as projection on db.StockReceivals;
