@@ -18,3 +18,5 @@ coverage/
 
 # Docker image exports (too big for GitHub)
 *.tar
+
+!oakhaven-dev-amd64.tar
